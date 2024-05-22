@@ -1,18 +1,6 @@
 import Grammar as G
 from typing import Self
 
-class RegexSymbol(G.Terminal):
-    symbol: str
-
-    def __init__(self, value: str) -> None:
-        super().__init__("[" + value + "]")
-        self.symbol = value
-    def __eq__(self, other: Self) -> bool:
-        if not isinstance(other, RegexSymbol): return False
-        return self.symbol == other.symbol
-
-
-
 # Base Regex, represent a regex rule
 class RegexExpression(G.NonTerminal):
     def __init__(self, value: str = "E") -> None:
@@ -20,7 +8,7 @@ class RegexExpression(G.NonTerminal):
 
 
 
-# Concatenation C -> EE
+# Concatenation C -> EE    E -> C
 class ConcatExpression(RegexExpression):
     lhs: RegexExpression | None
     rhs: RegexExpression | None
@@ -43,7 +31,7 @@ contact_regex_rule = G.Rule(RegexExpression(), G.String([ConcatExpression()]), l
 
 
 
-# Augmentation A -> E*        [, A -> E+, A -> E?]
+# Augmentation A -> E*    E -> A        [, A -> E+, A -> E?]
 class AugmentExpression(RegexExpression):
     body: RegexExpression | None
     augment: G.Terminal | None
@@ -67,7 +55,7 @@ augment_regex_rule = G.Rule(RegexExpression(), G.String([AugmentExpression()]), 
 
 
 
-# Parantheses P -> (E)
+# Parantheses P -> (E)    E -> P
 class ParenthesesExpression(RegexExpression):
     body: RegexExpression | None
 
@@ -91,7 +79,7 @@ parentheses_regex_rule = G.Rule(RegexExpression(), G.String([ParenthesesExpressi
 
 
 
-# Choice K -> E|E
+# Choice K -> E|E    E -> K
 class ChoiceExpression(RegexExpression):
     lhs: RegexExpression | None
     rhs: RegexExpression | None
@@ -113,3 +101,55 @@ def choice_application(s: G.String) -> ChoiceExpression:
 
 choice_application_rule = G.Rule(ChoiceExpression(), G.String([RegexExpression(), G.Terminal("|"), RegexExpression()]), choice_application)
 choice_regex_rule = G.Rule(RegexExpression(), G.String([ChoiceExpression()]), lambda x: x[0])
+
+
+
+# Tokenize Z -> [c]    E -> Z
+class TokenExpression(RegexExpression):
+    token: str | None
+
+    def __init__(self, token: str | None = None) -> None:
+        super().__init__("Z")
+
+        self.token = token
+
+def token_application(s: G.String) -> TokenExpression:
+    assert len(s.symbols) == 3
+    assert isinstance(s[0], G.Terminal)
+    assert isinstance(s[1], G.Terminal)
+    assert isinstance(s[2], G.Terminal)
+    assert s[0] == G.Terminal("[")
+    assert s[2] == G.Terminal("]")
+
+    return TokenExpression(s[1].value)
+
+def token_application_rule(tokens: str) -> list[G.Rule]:
+    rules = []
+    for c in tokens:
+        rules.append(G.Rule(TokenExpression(), G.String([G.Terminal("["), G.Terminal(c), G.Terminal("]")]), token_application))
+    return rules
+token_regex_rule = G.Rule(RegexExpression(), G.String([TokenExpression()]), lambda x: x[0])
+
+
+# Start S -> E$
+starting_rule = G.Rule(G.NonTerminal("S"), G.String([RegexExpression(), G.Terminal("EOL")]), lambda x: x[0])
+
+
+
+def regex_grammar(tokens: str) -> G.Grammar:
+    rules: list[G.Rule] = [
+        starting_rule,
+        token_regex_rule,
+        *token_application_rule(tokens),
+        choice_regex_rule,
+        choice_application_rule,
+        parentheses_regex_rule,
+        parentheses_rule,
+        augment_regex_rule,
+        augment_regex_rule,
+        contact_regex_rule,
+        concat_rule
+    ]
+    return G.rules2grammar(rules, G.NonTerminal("S"))
+
+x = regex_grammar("abcdefghiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_")
