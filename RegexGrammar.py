@@ -152,4 +152,4 @@ def regex_grammar(tokens: str) -> G.Grammar:
     ]
     return G.rules2grammar(rules, G.NonTerminal("S"))
 
-x = regex_grammar("abcdefghiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_")
+grammar = regex_grammar("abcdefghiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_")
