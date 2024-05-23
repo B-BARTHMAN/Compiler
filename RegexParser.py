@@ -1,6 +1,7 @@
 import RegexGrammar as RG
 import Grammar as G
 import copy
+import time
 
 class Item:
     rule: G.Rule
@@ -121,11 +122,11 @@ def regex_parse(s: str):
             current_node = Node(new_items, RG.grammar)
         
         # shift
-        print("shifting")
         while True:
             symbol = consume[0]
             if symbol == G.Empty():
-                break
+                # we finished reading
+                return stack[0]
             if not symbol in current_node.next_symbol():
                 # reduce after this
                 break
@@ -133,6 +134,7 @@ def regex_parse(s: str):
             current_node = Node(new_items, RG.grammar)
             stack.symbols.append(symbol)
             consume = G.String(consume.symbols[1:])
+            print("shifting:", symbol, " stack:", stack)
         
         # reduce
         reduced = False
@@ -142,9 +144,11 @@ def regex_parse(s: str):
             if not item.is_final():
                 continue
 
+            
             # check if lookahead is included
             if not consume[0] in item.look_ahead:
                 continue
+            
 
             # check if there are enough symbols on the stack
             rule_length: int = len(item.rule.rhs.symbols)
@@ -157,12 +161,14 @@ def regex_parse(s: str):
                 reduced = True
                 new_symbol = item.rule.application(end_of_stack)
                 stack = G.String(stack.symbols[:-rule_length] + [new_symbol])
+                print("reducing:", item)
                 break
         
         if not reduced:
             raise RegexParseException
 
-
-regex_parse("([a]|[b]|[c])*")
-
+id_reg = "([a]|[b]|[c]|[d]|[e]|[f]|[g]|[h]|[i]|[j]|[k]|[l]|[m]|[n]|[o]|[p]|[q]|[r]|[s]|[t]|[u]|[v]|[w]|[x]|[y]|[z]|[A]|[B]|[C]|[D]|[E]|[F]|[G]|[H]|[I]|[J]|[K]|[L]|[M]|[N]|[O]|[P]|[Q]|[R]|[S]|[T]|[U]|[V]|[W]|[X]|[Y]|[Z]|[_])(([a]|[b]|[c]|[d]|[e]|[f]|[g]|[h]|[i]|[j]|[k]|[l]|[m]|[n]|[o]|[p]|[q]|[r]|[s]|[t]|[u]|[v]|[w]|[x]|[y]|[z]|[A]|[B]|[C]|[D]|[E]|[F]|[G]|[H]|[I]|[J]|[K]|[L]|[M]|[N]|[O]|[P]|[Q]|[R]|[S]|[T]|[U]|[V]|[W]|[X]|[Y]|[Z]|[_]|[0]|[1]|[2]|[3]|[4]|[5]|[6]|[7]|[8]|[9])*)"
+time_now = time.time()
+x = regex_parse(id_reg)
+print("finished parsing in", time.time() - time_now)
 

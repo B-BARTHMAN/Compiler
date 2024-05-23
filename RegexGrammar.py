@@ -149,14 +149,16 @@ def regex_grammar(tokens: str) -> G.Grammar:
         choice_application_rule,
         parentheses_regex_rule,
         parentheses_rule,
-        augment_regex_rule,
+        augment_rule,
         augment_regex_rule,
         contact_regex_rule,
         concat_rule
     ]
     return G.rules2grammar(rules, G.NonTerminal("S"))
 
-grammar = regex_grammar("abcdefghiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_")
+grammar = regex_grammar("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_")
+"""
 for nt in grammar.nonterminals:
     for t in grammar.first(nt):
         print(nt, t)
+"""
