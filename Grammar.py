@@ -90,6 +90,12 @@ class Rule:
         self.lhs = lhs
         self.rhs = rhs
         self.application = application
+    
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Rule): return False
+        if self.lhs != other.lhs: return False
+        if self.rhs != other.rhs: return False
+        return True
 
 
 
