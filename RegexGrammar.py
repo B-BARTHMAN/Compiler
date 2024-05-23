@@ -3,8 +3,12 @@ from typing import Self
 
 # Base Regex, represent a regex rule
 class RegexExpression(G.NonTerminal):
-    def __init__(self, value: str = "E") -> None:
+
+    container: G.NonTerminal | None
+
+    def __init__(self, value: str = "E", container: G.NonTerminal | None = None) -> None:
         super().__init__(value)
+        self.container = container
 
 
 
@@ -27,7 +31,7 @@ def concat_application(s: G.String) -> ConcatExpression:
     return ConcatExpression(s[0], s[1])
 
 concat_rule = G.Rule(ConcatExpression(), G.String([RegexExpression(), RegexExpression()]), concat_application)
-contact_regex_rule = G.Rule(RegexExpression(), G.String([ConcatExpression()]), lambda x: x[0])
+contact_regex_rule = G.Rule(RegexExpression(), G.String([ConcatExpression()]), lambda x: RegexExpression("E", x[0]))
 
 
 
@@ -51,7 +55,7 @@ def augment_application(s: G.String) -> AugmentExpression:
     return AugmentExpression(s[0], s[1])
 
 augment_rule = G.Rule(AugmentExpression(), G.String([RegexExpression(), G.Terminal("*")]), augment_application)
-augment_regex_rule = G.Rule(RegexExpression(), G.String([AugmentExpression()]), lambda x: x[0])
+augment_regex_rule = G.Rule(RegexExpression(), G.String([AugmentExpression()]), lambda x: RegexExpression("E", x[0]))
 
 
 
@@ -75,7 +79,7 @@ def parentheses_application(s: G.String) -> ParenthesesExpression:
     return ParenthesesExpression(s[1])
 
 parentheses_rule = G.Rule(ParenthesesExpression(), G.String([G.Terminal("("), RegexExpression(), G.Terminal(")")]), parentheses_application)
-parentheses_regex_rule = G.Rule(RegexExpression(), G.String([ParenthesesExpression()]), lambda x: x[0])
+parentheses_regex_rule = G.Rule(RegexExpression(), G.String([ParenthesesExpression()]), lambda x: RegexExpression("E", x[0]))
 
 
 
@@ -100,7 +104,7 @@ def choice_application(s: G.String) -> ChoiceExpression:
     return ChoiceExpression(s[0], s[2])
 
 choice_application_rule = G.Rule(ChoiceExpression(), G.String([RegexExpression(), G.Terminal("|"), RegexExpression()]), choice_application)
-choice_regex_rule = G.Rule(RegexExpression(), G.String([ChoiceExpression()]), lambda x: x[0])
+choice_regex_rule = G.Rule(RegexExpression(), G.String([ChoiceExpression()]), lambda x: RegexExpression("E", x[0]))
 
 
 
@@ -128,11 +132,11 @@ def token_application_rule(tokens: str) -> list[G.Rule]:
     for c in tokens:
         rules.append(G.Rule(TokenExpression(), G.String([G.Terminal("["), G.Terminal(c), G.Terminal("]")]), token_application))
     return rules
-token_regex_rule = G.Rule(RegexExpression(), G.String([TokenExpression()]), lambda x: x[0])
+token_regex_rule = G.Rule(RegexExpression(), G.String([TokenExpression()]), lambda x: RegexExpression("E", x[0]))
 
 
 # Start S -> E$
-starting_rule = G.Rule(G.NonTerminal("S"), G.String([RegexExpression(), G.Terminal("EOL")]), lambda x: x[0])
+starting_rule = G.Rule(G.NonTerminal("S"), G.String([RegexExpression(), G.Terminal("EOL")]), lambda x: RegexExpression("E", x[0]))
 
 
 
@@ -153,3 +157,6 @@ def regex_grammar(tokens: str) -> G.Grammar:
     return G.rules2grammar(rules, G.NonTerminal("S"))
 
 grammar = regex_grammar("abcdefghiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_")
+for nt in grammar.nonterminals:
+    for t in grammar.first(nt):
+        print(nt, t)

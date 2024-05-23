@@ -121,8 +121,11 @@ def regex_parse(s: str):
             current_node = Node(new_items, RG.grammar)
         
         # shift
+        print("shifting")
         while True:
             symbol = consume[0]
+            if symbol == G.Empty():
+                break
             if not symbol in current_node.next_symbol():
                 # reduce after this
                 break
@@ -137,6 +140,10 @@ def regex_parse(s: str):
 
             # check if this is a final item
             if not item.is_final():
+                continue
+
+            # check if lookahead is included
+            if not consume[0] in item.look_ahead:
                 continue
 
             # check if there are enough symbols on the stack

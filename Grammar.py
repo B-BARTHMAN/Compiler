@@ -167,7 +167,7 @@ class Grammar:
                         break
 
                     # if we reach this point the string may derive the empty word
-                    if counter < len(rhs.symbols) - 1 and lhs != symbol:
+                    if counter < len(rhs.symbols) - 1:
                         self.__first[lhs].remove(Empty())
                     counter += 1
 
