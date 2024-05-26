@@ -33,18 +33,39 @@ class FiniteAutomaton:
     def define_end(self, id: int) -> None:
         self.end.append(id)
     
-    def run(self, value: str) -> bool:
-        if not self.is_dfa: raise Exception
+    def closure(self, start: int | set[int]) -> set[int]:
 
-        current: int = self.start
-        for c in value:
-            # no such transition
-            if not c in [x[0] for x in self.nodes[current].transitions]: return False
-            for t, id in self.nodes[current].transitions:
-                if t == c:
-                    current = id
-                    break
-        return current in self.end
+        if isinstance(start, int):
+            result = set([start])
+        else:
+            result = set(start)
+
+        while True:
+            n = set(result)
+            for i in result:
+                for c, x in self.nodes[i].transitions:
+                    if c == "":
+                        n.add(x)
+            if n.issubset(result):
+                return result
+            result.update(n)
+    
+    def next_state(self, start: set[int], token: str) -> set[int]:
+
+        result = set()
+        
+        for i in start:
+            for c, x in self.nodes[i].transitions:
+                if c == token:
+                    result.add(x)
+        return self.closure(result)
+
+    def accepts(self, value: set[int]) -> bool:
+        for s in value:
+            if s in self.end:
+                return True
+        return False
+            
 
 
 
@@ -144,6 +165,48 @@ def augment_accepter(fa0: FiniteAutomaton) -> FiniteAutomaton:
         fa.add_transition(id, fa.start, "")
     
     return fa
+
+
+
+def __fa2dfarec(fa: FiniteAutomaton, alphabet: str, states: dict[int, set[int]], transitions: list[list[int]], accept: list[int], lookat: int) -> None:
+
+    state = states[lookat]
+
+    if fa.accepts(state):
+        accept.append(lookat)
+
+    for c in alphabet:
+
+        # calculate next state
+        next_state = fa.next_state(state, c)
+        # next state already exists
+        if next_state in states.values():
+            key = list(states.values()).index(next_state)
+            assert states[key] == next_state
+            transitions[lookat][alphabet.index(c)] = key
+            continue
+
+        # add new state to the list
+        new_id = len(states)
+        states[new_id] = next_state
+        transitions.append([-1 for x in alphabet])
+        transitions[lookat][alphabet.index(c)] = new_id
+
+        # recursive
+        __fa2dfarec(fa, alphabet, states, transitions, accept, new_id)
+
+
+def fa2dfa(fa: FiniteAutomaton, alphabet: str):
+
+    states: dict[int, set[int]] = {}
+    transitions: list[list[int]] = [[-1 for x in alphabet]]
+    states[0] = fa.closure(fa.start)
+    accept: list[int] = []
+
+    __fa2dfarec(fa, alphabet, states, transitions, accept, 0)
+
+    return transitions, accept
+
 
 # useless:
 """

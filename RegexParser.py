@@ -161,7 +161,7 @@ def regex_parse(s: str, allowed: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN
                 reduced = True
                 new_symbol = item.rule.application(end_of_stack)
                 stack = G.String(stack.symbols[:-rule_length] + [new_symbol])
-                print("reducing:", item)
+                print("reducing:", item, " stack:", stack)
                 break
         
         if not reduced:

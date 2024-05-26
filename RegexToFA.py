@@ -22,7 +22,16 @@ def regex2FA(value: str, tokens: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN
 
 
 id_reg = "([a]|[b]|[c]|[d]|[e]|[f]|[g]|[h]|[i]|[j]|[k]|[l]|[m]|[n]|[o]|[p]|[q]|[r]|[s]|[t]|[u]|[v]|[w]|[x]|[y]|[z]|[A]|[B]|[C]|[D]|[E]|[F]|[G]|[H]|[I]|[J]|[K]|[L]|[M]|[N]|[O]|[P]|[Q]|[R]|[S]|[T]|[U]|[V]|[W]|[X]|[Y]|[Z]|[_])(([a]|[b]|[c]|[d]|[e]|[f]|[g]|[h]|[i]|[j]|[k]|[l]|[m]|[n]|[o]|[p]|[q]|[r]|[s]|[t]|[u]|[v]|[w]|[x]|[y]|[z]|[A]|[B]|[C]|[D]|[E]|[F]|[G]|[H]|[I]|[J]|[K]|[L]|[M]|[N]|[O]|[P]|[Q]|[R]|[S]|[T]|[U]|[V]|[W]|[X]|[Y]|[Z]|[_]|[0]|[1]|[2]|[3]|[4]|[5]|[6]|[7]|[8]|[9])*)"
-id_regs = "([a]|[b])(([a]|[b]|[0]|[1])*)"
 
-x = regex2FA(id_regs, "ab01")
-print("DONE")
+numval = "([0][x](([0]|[1]|[2]|[3]|[4]|[5]|[6]|[7]|[8]|[9]|[a]|[b]|[c]|[d]|[e]|[f]|[A]|[B]|[C]|[D]|[E]|[F]|[_])([0]|[1]|[2]|[3]|[4]|[5]|[6]|[7]|[8]|[9]|[a]|[b]|[c]|[d]|[e]|[f]|[A]|[B]|[C]|[D]|[E]|[F]|[_])*))|(([0]|[1]|[2]|[3]|[4]|[5]|[6]|[7]|[8]|[9]|[_])([0]|[1]|[2]|[3]|[4]|[5]|[6]|[7]|[8]|[9]|[_])*)|([0][b](([0]|[1]|[_])([0]|[1]|[_])*))"
+
+x = regex2FA(numval, "0123456789abcdefABCDEFx_")
+transitions, accept = FA.fa2dfa(x, "0123456789abcdefABCDEFx_")
+
+print("node_count:", len(transitions))
+print("accepting nodes:", accept, "\n")
+for i, v in enumerate(transitions):
+    print("node", i, ":", v)
+    for k, j in enumerate("0123456789abcdefABCDEFx_"):
+        print(j, ":", v[k])
+    print("\n")
