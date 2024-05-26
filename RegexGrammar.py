@@ -157,6 +157,7 @@ def regex_grammar(tokens: str) -> G.Grammar:
     return G.rules2grammar(rules, G.NonTerminal("S"))
 
 grammar = regex_grammar("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890_")
+
 """
 for nt in grammar.nonterminals:
     for t in grammar.first(nt):
