@@ -108,6 +108,54 @@ choice_regex_rule = G.Rule(RegexExpression(), G.String([ChoiceExpression()]), la
 
 
 
+# QuestionMark Q -> E?    E -> Q
+class QuestionMarkExpression(RegexExpression):
+    body: RegexExpression | None
+    augment: G.Terminal | None
+
+    def __init__(self, body: RegexExpression | None = None, augment: G.Terminal | None = None) -> None:
+        super().__init__("Q")
+
+        self.body = body
+        self.augment = augment
+
+def question_application(s: G.String) -> QuestionMarkExpression:
+    assert len(s.symbols) == 2
+    assert isinstance(s[1], G.Terminal)
+    assert s[1] == G.Terminal("?")
+    assert isinstance(s[0], RegexExpression)
+
+    return QuestionMarkExpression(s[0], s[1])
+
+question_application_rule = G.Rule(QuestionMarkExpression(), G.String([RegexExpression(), G.Terminal("?")]), question_application)
+question_regex_rule = G.Rule(RegexExpression(), G.String([QuestionMarkExpression()]), lambda x: RegexExpression("E", x[0]))
+
+
+
+# PlusExpression F -> E?    E -> F
+class PlusExpression(RegexExpression):
+    body: RegexExpression | None
+    augment: G.Terminal | None
+
+    def __init__(self, body: RegexExpression | None = None, augment: G.Terminal | None = None) -> None:
+        super().__init__("F")
+
+        self.body = body
+        self.augment = augment
+
+def plus_application(s: G.String) -> PlusExpression:
+    assert len(s.symbols) == 2
+    assert isinstance(s[1], G.Terminal)
+    assert s[1] == G.Terminal("+")
+    assert isinstance(s[0], RegexExpression)
+
+    return PlusExpression(s[0], s[1])
+
+plus_application_rule = G.Rule(QuestionMarkExpression(), G.String([RegexExpression(), G.Terminal("+")]), plus_application)
+plus_regex_rule = G.Rule(RegexExpression(), G.String([PlusExpression()]), lambda x: RegexExpression("E", x[0]))
+
+
+
 # Tokenize Z -> [c]    E -> Z
 class TokenExpression(RegexExpression):
     token: str | None
@@ -135,6 +183,36 @@ def token_application_rule(tokens: str) -> list[G.Rule]:
 token_regex_rule = G.Rule(RegexExpression(), G.String([TokenExpression()]), lambda x: RegexExpression("E", x[0]))
 
 
+
+# SpreadExpression O -> [[c]-[c]]    E -> O
+class SpreadExpression(RegexExpression):
+    token1: str | None
+    token2: str | None
+    
+    def __init__(self, token1: str | None = None, token2: str | None = None) -> None:
+        super().__init__("O")
+        
+        self.token1 = token1
+        self.token2 = token2
+
+def spread_application(s: G.String) -> SpreadExpression:
+    assert len(s.symbols) == 5
+    assert isinstance(s[0], G.Terminal)
+    assert isinstance(s[1], TokenExpression)
+    assert isinstance(s[2], G.Terminal)
+    assert isinstance(s[3], TokenExpression)
+    assert isinstance(s[4], G.Terminal)
+    assert s[0] == G.Terminal("[")
+    assert s[2] == G.Terminal("-")
+    assert s[4] == G.Terminal("]")
+    assert ord(s[1].token) < ord(s[3].token)
+    
+    return SpreadExpression(s[1].token, s[3].token)
+spread_application_rule = G.Rule(SpreadExpression(), G.String([G.Terminal("["), TokenExpression(), G.Terminal("-"), TokenExpression(), G.Terminal("]")]), spread_application)
+spread_regex_rule = G.Rule(RegexExpression(), G.String([SpreadExpression()]), lambda x: RegexExpression("E", x[0]))
+
+
+
 # Start S -> E$
 starting_rule = G.Rule(G.NonTerminal("S"), G.String([RegexExpression(), G.Terminal("EOL")]), lambda x: RegexExpression("E", x[0]))
 
@@ -145,9 +223,15 @@ def regex_grammar(tokens: str) -> G.Grammar:
         starting_rule,
         token_regex_rule,
         *token_application_rule(tokens),
+        spread_application_rule,
+        spread_regex_rule,
         choice_regex_rule,
         choice_application_rule,
         parentheses_regex_rule,
+        question_application_rule,
+        question_regex_rule,
+        plus_application_rule,
+        plus_regex_rule,
         parentheses_rule,
         augment_rule,
         augment_regex_rule,

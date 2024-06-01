@@ -79,6 +79,19 @@ def char_accepter(char: str) -> FiniteAutomaton:
 
     return fa
 
+def spread_accepter(char1: str, char2: str) -> FiniteAutomaton:
+    fa = FiniteAutomaton()
+    fa.add_node()
+    fa.add_node()
+    i = ord(char1)
+    while i <= ord(char2):
+        fa.add_transition(0, 1, chr(i))
+        i += 1
+    fa.define_start(0)
+    fa.define_end(1)
+    
+    return fa
+
 def concat_accepter(fa0: FiniteAutomaton, fa1: FiniteAutomaton) -> FiniteAutomaton:
     # create new empty fa
     fa = FiniteAutomaton()
@@ -168,6 +181,56 @@ def augment_accepter(fa0: FiniteAutomaton) -> FiniteAutomaton:
 
 
 
+def question_accepter(fa0: FiniteAutomaton) -> FiniteAutomaton:
+    # create new empty fa
+    fa = FiniteAutomaton()
+
+    # add all nodes to fa
+    for i in range(len(fa0.nodes)):
+        fa.add_node()
+    
+    # add all old transitions to fa
+    for n in fa0.nodes:
+        for c, id in n.transitions:
+            fa.add_transition(n.id, id, c)
+    
+    # define the same start
+    fa.define_start(fa0.start)
+
+    # add epsilon transitions from start to end nodes
+    for id in fa0.end:
+        fa.define_end(id)
+        fa.add_transition(fa.start, id, "")
+    
+    return fa
+
+
+
+def plus_accepter(fa0: FiniteAutomaton) -> FiniteAutomaton:
+    # create new empty fa
+    fa = FiniteAutomaton()
+
+    # add all nodes to fa
+    for i in range(len(fa0.nodes)):
+        fa.add_node()
+    
+    # add all old transitions to fa
+    for n in fa0.nodes:
+        for c, id in n.transitions:
+            fa.add_transition(n.id, id, c)
+    
+    # define the same start
+    fa.define_start(fa0.start)
+
+    # add epsilon transitions from start to end nodes
+    for id in fa0.end:
+        fa.define_end(id)
+        fa.add_transition(id, fa.start, "")
+    
+    return fa
+
+
+
 def __fa2dfarec(fa: FiniteAutomaton, alphabet: str, states: dict[int, set[int]], transitions: list[list[int]], accept: list[int], lookat: int) -> None:
 
     state = states[lookat]
@@ -195,6 +258,19 @@ def __fa2dfarec(fa: FiniteAutomaton, alphabet: str, states: dict[int, set[int]],
         # recursive
         __fa2dfarec(fa, alphabet, states, transitions, accept, new_id)
 
+def __reaches_accept(transitions: list[list[int]], visited: list[int], accepts: list[int], lookat: int) -> bool:
+    
+    visited.append(lookat)
+
+    if lookat in accepts: return True
+
+    for t in transitions[lookat]:
+        if t in visited: continue
+        if __reaches_accept(transitions, visited, accepts, t): return True
+    
+    return False
+
+
 
 def fa2dfa(fa: FiniteAutomaton, alphabet: str):
 
@@ -204,53 +280,11 @@ def fa2dfa(fa: FiniteAutomaton, alphabet: str):
     accept: list[int] = []
 
     __fa2dfarec(fa, alphabet, states, transitions, accept, 0)
-
-    return transitions, accept
-
-
-# useless:
-"""
-def make_nfa(fa0: FiniteAutomaton) -> FiniteAutomaton:
-    # create new empty fa
-    fa = FiniteAutomaton()
-
-    # add all nodes to fa
-    for i in range(len(fa0.nodes)):
-        fa.add_node()
     
-    # add all old transitions to fa
-    for n in fa0.nodes:
-        for c, id in n.transitions:
-            fa.add_transition(n.id, id, c)
-    
-    # define the same start
-    fa.define_start(fa0.start)
+    reject: list[int] = []
 
-    # add the same ends
-    for id in fa0.end:
-        fa.define_end(id)
-    
-    repeat = True
-    while repeat:
-        repeat = False
+    for start in range(len(states)):
+        if not __reaches_accept(transitions, [], accept, start): reject.append(start)
 
-        for n in fa.nodes:
+    return transitions, accept, reject
 
-            new_transitions: list[tuple[str, int]] = []
-            for c, id in n.transitions:
-
-                # skip non epsilon transitions
-                if c != "":
-                    new_transitions.append((c, id))
-                    continue
-
-                repeat = True
-
-                for x, id2 in fa.nodes[id].transitions:
-                    if (not (x, id2) in new_transitions) and (id != id2):
-                        new_transitions.append((x, id2))
-            
-            n.transitions = new_transitions
-    
-    return fa
-"""
